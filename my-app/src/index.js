@@ -3,10 +3,12 @@ import ReactDOM from 'react-dom';
 import './index.css';
 
 function Square(props) {
+  console.log('props.activeSquare: ' + props.activeSquare);
     return (
         <button 
-            className="square" 
+            className={props.activeSquare ? 'square square--selected' : 'square'}
             onClick={props.onClick}
+            
         >
           {props.value}
         </button>
@@ -15,10 +17,13 @@ function Square(props) {
   
   class Board extends React.Component {
     renderSquare(i) {
+      //console.log(this.props);
+      //console.log(i);
       return (
         <Square 
-            value={this.props.squares[i]} 
+            value={this.props.squares[i]}
             onClick={() => this.props.onClick(i)}
+            activeSquare={this.props.activeSquare === i}
         />
       );
     }
@@ -52,6 +57,9 @@ function Square(props) {
       this.state = {
         history : [{
           squares: Array(9).fill(null),
+          move_col: null,
+          move_row: null,
+          selectedSquare: null,
         }],
         stepNumber: 0,
         xIsNext: true,
@@ -69,17 +77,26 @@ function Square(props) {
       this.setState({
         history: history.concat([{
           squares: squares,
+          move_col: getCol(i),
+          move_row: getRow(i),
+          selectedSquare: i,
         }]),
         stepNumber: history.length,
         xIsNext: !this.state.xIsNext,
       });
+      //console.log(this.state.activeSquare);
+      //console.log(this.state.xIsNext);
+      //console.log(this.state.stepNumber)
     }
 
     jumpTo(step) {
       this.setState({
         stepNumber: step,
-        xIsNext: (step % 2) === 0
+        xIsNext: (step % 2) === 0,
       });
+      //console.log('Capture');
+      //console.log(step);
+      //console.log(this.state.stepNumber);
     }
 
     render() {
@@ -87,12 +104,17 @@ function Square(props) {
       const current = history[this.state.stepNumber];
       const winner = calculateWinner(current.squares);
       
+      //console.log('this.state.stepNumber: ' + this.state.stepNumber);
       const moves = history.map((step, move) => {
+        console.log('move: ' + move + '; this.state.stepNumber: ' + this.state.stepNumber);
         const desc = move ?
-          'Go to move #' + move :
+          'Go to move #' + move + ' - ('+ step.move_row + ', ' + step.move_col + ')' :
           'Go to game start';
           return (
-            <li key={move}>
+            <li 
+              key={move} 
+              className={this.state.stepNumber === move ? 'move--active' : ''}
+            >
               <button onClick={() => this.jumpTo(move)}>{desc}</button>
             </li>
           );
@@ -105,13 +127,14 @@ function Square(props) {
       else {
         status = 'Next player: ' + (this.state.xIsNext ? 'X' : 'O');
       }
-      
+      //console.log(this.state.history.activeSquare);
       return (
         <div className="game">
           <div className="game-board">
             <Board 
               squares={current.squares}
               onClick={(i) => this.handleClick(i)}
+              activeSquare={current.selectedSquare}
             />
           </div>
           <div className="game-info">
@@ -148,4 +171,30 @@ function Square(props) {
       }
     }
     return null;
+  }
+
+  function getRow(i) {
+    if (i < 3 && (i-2) <= 0) {
+      return 1;
+    }
+    if (i < 6 && (i-5) <= 0) {
+      return 2;
+    }
+    if (i < 9 && (i-8) <= 0) {
+      return 3;
+    }
+  }
+
+  function getCol(i) {
+    
+    switch (i % 3) {
+      case 0:
+        return 1;
+      case 1:
+        return 2;
+      case 2:
+        return 3;
+      default:
+        return;
+    }
   }

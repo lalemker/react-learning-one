@@ -1,6 +1,7 @@
 body {
     font: 14px "Century Gothic", Futura, sans-serif;
     margin: 20px;
+    background: #000;
   }
   
   ol, ul {
@@ -18,22 +19,32 @@ body {
   }
   
   .square {
-    background: #fff;
+    background: #000;
     border: 1px solid #999;
     float: left;
-    font-size: 24px;
+    font-size: 72px;
     font-weight: bold;
-    line-height: 34px;
-    height: 34px;
+    line-height: 102px;
+    height: 102px;
     margin-right: -1px;
     margin-top: -1px;
     padding: 0;
     text-align: center;
-    width: 34px;
+    width: 102px;
+    color: #fff;
   }
   
-  .square:focus {
+  li.move--active button {
+    font-weight: bold;
+  }
+
+  .square--selected {
     outline: none;
+    background: rgb(18, 131, 3);
+  }
+
+  .square:hover {
+    background: #ddd;
   }
   
   .kbd-navigation .square:focus {
