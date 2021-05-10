@@ -2,6 +2,7 @@ body {
     font: 14px "Century Gothic", Futura, sans-serif;
     margin: 20px;
     background: #000;
+    color: #fff;
   }
   
   ol, ul {
@@ -41,6 +42,11 @@ body {
   .square--selected {
     outline: none;
     background: rgb(18, 131, 3);
+  }
+
+  .square--winner {
+    outline: none;
+    background: rgb(231, 117, 235);
   }
 
   .square:hover {

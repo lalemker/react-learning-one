@@ -3,16 +3,20 @@ import ReactDOM from 'react-dom';
 import './index.css';
 
 function Square(props) {
-  console.log('props.activeSquare: ' + props.activeSquare);
-    return (
-        <button 
-            className={props.activeSquare ? 'square square--selected' : 'square'}
-            onClick={props.onClick}
-            
-        >
-          {props.value}
-        </button>
-      );
+  //console.log('props.activeSquare: ' + props.activeSquare);
+  return (
+      <button 
+          className={props.activeSquare && !props.winnerSquare ? 
+                      'square square--selected' : 
+                      props.winnerSquare ?
+                        'square square--winner' :
+                        'square'}
+          onClick={props.onClick}
+          
+      >
+        {props.value}
+      </button>
+    );
   }
   
   class Board extends React.Component {
@@ -24,28 +28,27 @@ function Square(props) {
             value={this.props.squares[i]}
             onClick={() => this.props.onClick(i)}
             activeSquare={this.props.activeSquare === i}
+            winnerSquare={this.props.winningSquares ? this.props.winningSquares.includes(i) : false}
         />
       );
     }
-  
+    
     render() {
-      return (
+      const rows = this.props.rows;
+      const cols = this.props.cols;
+      let boardRows = [];
+      
+      for (let row = 0; row < rows; row++) {
+        let rowSquares = []
+        for (let col = 0; col < cols; col++) {
+          rowSquares.push(this.renderSquare(row*rows+col));
+        };
+        boardRows.push(<div className="board-row">{rowSquares}</div>);
+      };
+      
+      return (    
         <div>
-          <div className="board-row">
-            {this.renderSquare(0)}
-            {this.renderSquare(1)}
-            {this.renderSquare(2)}
-          </div>
-          <div className="board-row">
-            {this.renderSquare(3)}
-            {this.renderSquare(4)}
-            {this.renderSquare(5)}
-          </div>
-          <div className="board-row">
-            {this.renderSquare(6)}
-            {this.renderSquare(7)}
-            {this.renderSquare(8)}
-          </div>
+          {boardRows}
         </div>
       );
     }
@@ -57,13 +60,17 @@ function Square(props) {
       this.state = {
         history : [{
           squares: Array(9).fill(null),
-          move_col: null,
-          move_row: null,
+          moveCol: null,
+          moveRow: null,
           selectedSquare: null,
+          winningSquares: null,
         }],
         stepNumber: 0,
         xIsNext: true,
+        sortDescending: false,
       }
+      this.rows=3;
+      this.cols=3;
     }
 
     handleClick(i) {
@@ -77,8 +84,8 @@ function Square(props) {
       this.setState({
         history: history.concat([{
           squares: squares,
-          move_col: getCol(i),
-          move_row: getRow(i),
+          moveCol: getCol(this.cols,i),
+          moveRow: getRow(this.rows,i),
           selectedSquare: i,
         }]),
         stepNumber: history.length,
@@ -99,16 +106,24 @@ function Square(props) {
       //console.log(this.state.stepNumber);
     }
 
+    toggleSort() {
+      this.setState({
+        sortDescending: !this.state.sortDescending
+      });
+      //console.log('sortDescending: ' +!this.state.sortDescending);
+    }
+
     render() {
       const history = this.state.history;
       const current = history[this.state.stepNumber];
       const winner = calculateWinner(current.squares);
       
       //console.log('this.state.stepNumber: ' + this.state.stepNumber);
-      const moves = history.map((step, move) => {
-        console.log('move: ' + move + '; this.state.stepNumber: ' + this.state.stepNumber);
+      const moves = history
+        .map((step, move) => {
+        //console.log('move: ' + move + '; this.state.stepNumber: ' + this.state.stepNumber);
         const desc = move ?
-          'Go to move #' + move + ' - ('+ step.move_row + ', ' + step.move_col + ')' :
+          'Go to move #' + move + ' - ('+ step.moveRow + ', ' + step.moveCol + ')' :
           'Go to game start';
           return (
             <li 
@@ -119,10 +134,16 @@ function Square(props) {
             </li>
           );
       });
+
+      const sorted_moves = [].concat(moves)
+        .sort((a,b) => (!this.state.sortDescending) ? 1 : -1)
       
       let status;
       if (winner) {
-        status = 'Winner: ' + winner;
+        status = 'Winner: ' + (this.state.xIsNext ? 'O' : 'X');
+      }
+      else if (this.state.stepNumber === (this.rows * this.cols)) {
+        status = 'Draw: no more moves available';
       }
       else {
         status = 'Next player: ' + (this.state.xIsNext ? 'X' : 'O');
@@ -135,11 +156,19 @@ function Square(props) {
               squares={current.squares}
               onClick={(i) => this.handleClick(i)}
               activeSquare={current.selectedSquare}
+              winningSquares={winner}
+              rows={this.rows}
+              cols={this.cols}
             />
           </div>
           <div className="game-info">
             <div>{status}</div>
-            <ol>{moves}</ol>
+            <div>
+              <button onClick={() => this.toggleSort()}>
+                {this.state.sortDescending ? 'Sort Moves Ascending' : 'Sort Moves Descending'}
+              </button>
+            </div>
+            <ol>{sorted_moves}</ol>
           </div>
         </div>
       );
@@ -167,34 +196,22 @@ function Square(props) {
     for (let i = 0; i < lines.length; i++) {
       const [a, b, c] = lines[i];
       if (squares[a] && squares[a] === squares[b] && squares[a] === squares[c]) {
-        return squares[a];
+        return lines[i];
       }
     }
     return null;
   }
 
-  function getRow(i) {
-    if (i < 3 && (i-2) <= 0) {
-      return 1;
+  function getRow(rows,i) {
+    for(let n = 0; n < rows; n++) {
+      let row = (i-rows*n) < rows ? n+1 : null
+      if (row != null) {
+        return row;
+      }
     }
-    if (i < 6 && (i-5) <= 0) {
-      return 2;
-    }
-    if (i < 9 && (i-8) <= 0) {
-      return 3;
-    }
+    return null;
   }
 
-  function getCol(i) {
-    
-    switch (i % 3) {
-      case 0:
-        return 1;
-      case 1:
-        return 2;
-      case 2:
-        return 3;
-      default:
-        return;
-    }
+  function getCol(cols,i) {
+    return (i % cols) + 1
   }
